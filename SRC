@@ -1,0 +1,284 @@
+import tkinter as tk
+import sqlite3
+from tkinter import messagebox, ttk
+
+class BibliotecaApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Sistema de Biblioteca")
+        self.criar_tabelas()
+        self.criar_widgets()
+        self.carregar_autores()
+        self.carregar_livros()
+
+    # Conexão com o banco de dados
+    def conectar_db(self):
+        return sqlite3.connect('biblioteca.db')
+
+    # Criação das tabelas no banco de dados
+    def criar_tabelas(self):
+        conn = self.conectar_db()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Autores (
+                AutorID INTEGER PRIMARY KEY AUTOINCREMENT,
+                Nome TEXT NOT NULL,
+                Nacionalidade TEXT
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Livros (
+                LivroID INTEGER PRIMARY KEY AUTOINCREMENT,
+                Titulo TEXT NOT NULL,
+                AutorID INTEGER,
+                AnoPublicacao INTEGER,
+                Genero TEXT,
+                FOREIGN KEY (AutorID) REFERENCES Autores(AutorID)
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Emprestimos (
+                EmprestimoID INTEGER PRIMARY KEY AUTOINCREMENT,
+                LivroID INTEGER,
+                DataEmprestimo TEXT,
+                DataDevolucao TEXT,
+                NomeUsuario TEXT,
+                FOREIGN KEY (LivroID) REFERENCES Livros(LivroID)
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS LivrosNaoDevolvidos (
+                LivroID INTEGER,
+                NomeUsuario TEXT,
+                DataEmprestimo TEXT,
+                FOREIGN KEY (LivroID) REFERENCES Livros(LivroID)
+            )
+        ''')
+
+        conn.commit()
+        conn.close()
+
+    # Função para executar consultas SQL
+    def executar_consulta(self, consulta, params=()):
+        conn = self.conectar_db()
+        cursor = conn.cursor()
+        cursor.execute(consulta, params)
+        conn.commit()
+        conn.close()
+
+    # Adição de autores
+    def adicionar_autor(self):
+        nome = self.nome_entry.get()
+        nacionalidade = self.nacionalidade_entry.get()
+        if nome and nacionalidade:
+            self.executar_consulta('INSERT INTO Autores (Nome, Nacionalidade) VALUES (?, ?)', (nome, nacionalidade))
+            messagebox.showinfo("Sucesso", "Autor adicionado com sucesso!")
+            self.limpar_campos([self.nome_entry, self.nacionalidade_entry])
+            self.carregar_autores()
+        else:
+            messagebox.showwarning("Atenção", "Todos os campos devem ser preenchidos.")
+
+    # Adição de livros
+    def adicionar_livro(self):
+        titulo = self.titulo_entry.get()
+        autor_id = self.autor_combobox.get()
+        ano_publicacao = self.ano_entry.get()
+        genero = self.genero_entry.get()
+        
+        if titulo and autor_id and ano_publicacao and genero:
+            autor_id = autor_id.split(" (ID: ")[1][:-1]
+            self.executar_consulta('INSERT INTO Livros (Titulo, AutorID, AnoPublicacao, Genero) VALUES (?, ?, ?, ?)',
+                                   (titulo, autor_id, ano_publicacao, genero))
+            messagebox.showinfo("Sucesso", "Livro adicionado com sucesso!")
+            self.limpar_campos([self.titulo_entry, self.ano_entry, self.genero_entry])
+            self.carregar_livros()
+        else:
+            messagebox.showwarning("Atenção", "Todos os campos devem ser preenchidos.")
+
+    # Registro de empréstimos
+    def registrar_emprestimo(self):
+        livro_id = self.livro_combobox.get()
+        data_emprestimo = self.data_emprestimo_entry.get()
+        nome_usuario = self.nome_usuario_entry.get()
+        
+        if livro_id and data_emprestimo and nome_usuario:
+            livro_id = livro_id.split(" (ID: ")[1][:-1]
+            self.executar_consulta('INSERT INTO Emprestimos (LivroID, DataEmprestimo, NomeUsuario) VALUES (?, ?, ?)',
+                                   (livro_id, data_emprestimo, nome_usuario))
+            self.executar_consulta('INSERT INTO LivrosNaoDevolvidos (LivroID, NomeUsuario, DataEmprestimo) VALUES (?, ?, ?)',
+                                   (livro_id, nome_usuario, data_emprestimo))
+            messagebox.showinfo("Sucesso", "Empréstimo registrado com sucesso!")
+            self.limpar_campos([self.data_emprestimo_entry, self.nome_usuario_entry])
+        else:
+            messagebox.showwarning("Atenção", "Todos os campos devem ser preenchidos.")
+
+    # Devolução de livros
+    def devolver_livro(self):
+        livro_id = self.livro_combobox.get()
+        
+        if livro_id:
+            livro_id = livro_id.split(" (ID: ")[1][:-1]
+            conn = self.conectar_db()
+            cursor = conn.cursor()
+            cursor.execute('SELECT EmprestimoID FROM Emprestimos WHERE LivroID = ?', (livro_id,))
+            emprestimo = cursor.fetchone()
+            if emprestimo:
+                self.executar_consulta('DELETE FROM Emprestimos WHERE LivroID = ?', (livro_id,))
+                self.executar_consulta('DELETE FROM LivrosNaoDevolvidos WHERE LivroID = ?', (livro_id,))
+                messagebox.showinfo("Sucesso", "Livro devolvido com sucesso!")
+            else:
+                messagebox.showwarning("Atenção", "Este livro não está emprestado.")
+            conn.close()
+            self.carregar_livros()
+        else:
+            messagebox.showwarning("Atenção", "Selecione um livro para devolver.")
+
+    # Carregamento de dados
+    def carregar_autores(self):
+        conn = self.conectar_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT AutorID, Nome FROM Autores')
+        autores = cursor.fetchall()
+        conn.close()
+        
+        self.autor_combobox['values'] = [f"{nome} (ID: {autor_id})" for autor_id, nome in autores]
+        self.autor_combobox.set('')
+
+    def carregar_livros(self):
+        conn = self.conectar_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT LivroID, Titulo FROM Livros')
+        livros = cursor.fetchall()
+        conn.close()
+        
+        self.livro_combobox['values'] = [f"{titulo} (ID: {livro_id})" for livro_id, titulo in livros]
+        self.livro_combobox.set('')
+
+    # Visualização de registros
+    def visualizar_registros(self):
+        janela_registros = tk.Toplevel(self.root)
+        janela_registros.title("Visualizar Registros")
+
+        def buscar_e_exibir_registros(consulta):
+            conn = self.conectar_db()
+            cursor = conn.cursor()
+            cursor.execute(consulta)
+            registros = cursor.fetchall()
+            conn.close()
+            return registros
+
+        def exibir_registros(titulo, registros):
+            if registros:
+                for registro in registros:
+                    tk.Label(janela_registros, text=str(registro)).pack()
+            else:
+                tk.Label(janela_registros, text="Nenhum registro encontrado.").pack()
+
+        tk.Button(janela_registros, text="Ver Autores", command=lambda: exibir_registros("Autores", buscar_e_exibir_registros("SELECT * FROM Autores"))).pack(pady=5)
+        tk.Button(janela_registros, text="Ver Livros", command=lambda: exibir_registros("Livros", buscar_e_exibir_registros("SELECT * FROM Livros"))).pack(pady=5)
+        tk.Button(janela_registros, text="Ver Empréstimos", command=lambda: exibir_registros("Empréstimos", buscar_e_exibir_registros("SELECT * FROM Emprestimos"))).pack(pady=5)
+        tk.Button(janela_registros, text="Ver Livros Não Devolvidos", command=lambda: exibir_registros("Livros Não Devolvidos", buscar_e_exibir_registros("SELECT * FROM LivrosNaoDevolvidos"))).pack(pady=5)
+
+    # Pesquisa de livros
+    def pesquisar_livros(self):
+        termo_pesquisa = self.pesquisa_entry.get()
+        conn = self.conectar_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT LivroID, Titulo FROM Livros WHERE Titulo LIKE ?', ('%' + termo_pesquisa + '%',))
+        resultados = cursor.fetchall()
+        conn.close()
+        
+        self.exibir_resultados_pesquisa(resultados)
+
+    def exibir_resultados_pesquisa(self, resultados):
+        janela_resultados_pesquisa = tk.Toplevel(self.root)
+        janela_resultados_pesquisa.title("Resultados da Pesquisa")
+        if resultados:
+            for registro in resultados:
+                tk.Label(janela_resultados_pesquisa, text=str(registro)).pack()
+        else:
+            tk.Label(janela_resultados_pesquisa, text="Nenhum resultado encontrado.").pack()
+
+    # Busca de detalhes do livro
+    def pesquisar_detalhes_livro(self):
+        titulo_livro = self.pesquisa_entry.get()
+        conn = self.conectar_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM Livros WHERE Titulo = ?', (titulo_livro,))
+        livro = cursor.fetchone()
+        conn.close()
+        
+        if livro:
+            detalhes = f"ID: {livro[0]}\nTítulo: {livro[1]}\nAutorID: {livro[2]}\nAno: {livro[3]}\nGênero: {livro[4]}"
+            messagebox.showinfo("Detalhes do Livro", detalhes)
+        else:
+            messagebox.showwarning("Atenção", "Livro não encontrado.")
+
+    # Limpar campos
+    def limpar_campos(self, campos):
+        for campo in campos:
+            campo.delete(0, tk.END)
+
+    # Criação de widgets
+    def criar_widgets(self):
+        frame = tk.Frame(self.root)
+        frame.pack(pady=10)
+
+        tk.Label(frame, text="Nome do Autor:").grid(row=0, column=0)
+        self.nome_entry = tk.Entry(frame)
+        self.nome_entry.grid(row=0, column=1)
+
+        tk.Label(frame, text="Nacionalidade:").grid(row=1, column=0)
+        self.nacionalidade_entry = tk.Entry(frame)
+        self.nacionalidade_entry.grid(row=1, column=1)
+
+        tk.Button(frame, text="Adicionar Autor", command=self.adicionar_autor).grid(row=2, columnspan=2, pady=5)
+
+        tk.Label(frame, text="Título do Livro:").grid(row=3, column=0)
+        self.titulo_entry = tk.Entry(frame)
+        self.titulo_entry.grid(row=3, column=1)
+
+        tk.Label(frame, text="Autor:").grid(row=4, column=0)
+        self.autor_combobox = ttk.Combobox(frame)
+        self.autor_combobox.grid(row=4, column=1)
+
+        tk.Label(frame, text="Ano de Publicação:").grid(row=5, column=0)
+        self.ano_entry = tk.Entry(frame)
+        self.ano_entry.grid(row=5, column=1)
+
+        tk.Label(frame, text="Gênero:").grid(row=6, column=0)
+        self.genero_entry = tk.Entry(frame)
+        self.genero_entry.grid(row=6, column=1)
+
+        tk.Button(frame, text="Adicionar Livro", command=self.adicionar_livro).grid(row=7, columnspan=2, pady=5)
+
+        tk.Label(frame, text="Livro:").grid(row=8, column=0)
+        self.livro_combobox = ttk.Combobox(frame)
+        self.livro_combobox.grid(row=8, column=1)
+
+        tk.Label(frame, text="Data de Empréstimo:").grid(row=9, column=0)
+        self.data_emprestimo_entry = tk.Entry(frame)
+        self.data_emprestimo_entry.grid(row=9, column=1)
+
+        tk.Label(frame, text="Nome do Usuário:").grid(row=10, column=0)
+        self.nome_usuario_entry = tk.Entry(frame)
+        self.nome_usuario_entry.grid(row=10, column=1)
+
+        tk.Button(frame, text="Registrar Empréstimo", command=self.registrar_emprestimo).grid(row=11, columnspan=2, pady=5)
+        tk.Button(frame, text="Devolver Livro", command=self.devolver_livro).grid(row=12, columnspan=2, pady=5)
+
+        tk.Label(frame, text="Pesquisa:").grid(row=13, column=0)
+        self.pesquisa_entry = tk.Entry(frame)
+        self.pesquisa_entry.grid(row=13, column=1)
+        tk.Button(frame, text="Buscar", command=self.pesquisar_livros).grid(row=14, columnspan=2, pady=5)
+
+        tk.Button(frame, text="Visualizar Registros", command=self.visualizar_registros).grid(row=15, columnspan=2, pady=5)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = BibliotecaApp(root)
+    root.mainloop()
