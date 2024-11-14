@@ -1,0 +1,44 @@
+id,titulo,autor,ano_publicacao,genero,emprestado
+1,O Senhor dos Anéis,J.R.R. Tolkien,1954,Fantasia,Não
+2,Harry Potter e a Pedra Filosofal,J.K. Rowling,1997,Fantasia,Sim
+3,1984,George Orwell,1949,Ficção Científica,Não
+4,A Revolução dos Bichos,George Orwell,1945,Ficção,Sim
+5,O Código Da Vinci,Dan Brown,2003,Thriller,Não
+6,Orgulho e Preconceito,Jane Austen,1813,Romance,Sim
+7,A Culpa é das Estrelas,John Green,2012,Drama,Não
+8,Dom Quixote,Miguel de Cervantes,1605,Clássico,Sim
+9,O Pequeno Príncipe,Antoine de Saint-Exupéry,1943,Fantasia,Não
+10,Frankenstein,Mary Shelley,1818,Terror,Sim
+
+Explicação das colunas:
+id: Um identificador único para cada livro.
+titulo: O título do livro.
+autor: O autor do livro.
+ano_publicacao: O ano de publicação do livro.
+genero: O gênero literário do livro (e.g., Fantasia, Romance, Ficção Científica).
+emprestado: Indica se o livro está emprestado ou disponível (Sim/Não).
+Como usar esse dataset:
+
+1. Importação para Python (com Pandas): Você pode importar esse dataset para análise em Python, utilizando a biblioteca Pandas.
+import pandas as pd
+
+# Carregar o dataset
+df = pd.read_csv('livros_biblioteca.csv')
+
+# Exibir as primeiras linhas do dataset
+print(df.head())
+
+2. Análises possíveis:
+
+Quantos livros estão emprestados?
+
+livros_emprestados = df[df['emprestado'] == 'Sim']
+print(f'Livros emprestados: {len(livros_emprestados)}')
+
+Livros de um determinado autor:
+
+autor = 'George Orwell'
+livros_orwell = df[df['autor'] == autor]
+print(livros_orwell)
+
+3. Geração de visualizações: Você pode criar gráficos para visualizar os dados, como gráficos de barras sobre os gêneros dos livros ou a quantidade de livros emprestados.
