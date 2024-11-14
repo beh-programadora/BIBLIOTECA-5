@@ -1,0 +1,7 @@
+biblioteca_app/
+├── src/
+│   ├── biblioteca_app.py
+├── data/
+├── README.md
+├── requirements.txt
+└── .gitignore
