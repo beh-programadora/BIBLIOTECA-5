@@ -1,0 +1,55 @@
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos temporários ou de cache
+*.log
+*.bak
+*.swp
+__pycache__/
+*.pyc
+*.pyo
+
+# Arquivos de configuração do editor de código
+.vscode/
+.idea/
+
+# Dependências e ambientes virtuais
+venv/
+env/
+__pycache__/
+
+# Arquivos de bibliotecas externas
+*.tar.gz
+*.zip
+
+# Arquivos de instalação do Python
+*.egg
+*.egg-info
+dist/
+build/
+
+# Arquivos gerados ao rodar o projeto
+*.sqlite
+*.db
+
+# Arquivos sensíveis de configuração (se houver)
+config.json
+secrets.json
+
+# Relatórios e saídas temporárias
+*.csv
+*.xlsx
+*.log
+
+# Arquivos de backup
+*.bak
+*.tmp
+
+# Arquivos relacionados ao Jupyter Notebook (se houver)
+.ipynb_checkpoints
