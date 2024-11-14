@@ -1,0 +1,37 @@
+Descrição do Projeto
+O projeto Sistema de Biblioteca é uma aplicação em Python que utiliza Tkinter para a interface gráfica e SQLite para o banco de dados. O sistema permite o cadastro de autores e livros, o registro de empréstimos e devoluções de livros, e a visualização dos livros não devolvidos. Ele foi projetado para ser um sistema simples e eficiente para gerenciar uma biblioteca de livros.
+
+Objetivos
+Adicionar autores ao sistema.
+Registrar livros com informações sobre título, autor, ano de publicação e gênero.
+Registrar e gerenciar empréstimos de livros para usuários.
+Visualizar os livros não devolvidos.
+Funcionalidades
+Cadastro de autores e livros.
+Registro de empréstimos com dados de nome, telefone e data do empréstimo.
+Devolução de livros e atualização de status.
+Visualização de livros não devolvidos.
+Requisitos de Sistema
+Python 3.6 ou superior.
+SQLite para banco de dados.
+Bibliotecas Necessárias
+As bibliotecas utilizadas no projeto são:
+
+Tkinter (para interface gráfica)
+SQLite3 (para gerenciamento do banco de dados)
+re (para validação de dados)
+Como Executar o Projeto
+Clone este repositório ou faça o download do código.
+Certifique-se de ter o Python 3.x instalado em sua máquina.
+Execute o arquivo biblioteca_app.py para iniciar o aplicativo.
+O sistema de biblioteca estará disponível na interface gráfica onde você poderá interagir com todas as funcionalidades.
+Instruções de Execução
+Instale o Python em seu sistema.
+Crie um ambiente virtual (opcional, mas recomendado) e instale as dependências.
+Execute o seguinte comando para rodar o sistema:
+python src/biblioteca_app.py
+
+Resultados Principais
+Visualização da lista de livros não devolvidos.
+Interface gráfica para cadastrar e registrar empréstimos.
+Sistema de banco de dados para armazenar autores, livros, e empréstimos.
